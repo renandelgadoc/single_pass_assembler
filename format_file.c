@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <ctype.h>
 
 void write_formatted_file()
 {
+
   FILE *finptr;
   FILE *foutptr;
 
@@ -12,41 +14,25 @@ void write_formatted_file()
   {
     printf("Not able to open the file.");
   }
-  char myString[100];
+  char word[100];
 
   // Iter lines
-  while (fgets(myString, 100, finptr))
+  while (fscanf(finptr, "%s", word) != EOF)
   {
-    int i = 0;
 
-    // Jump empty line
-    if (myString[i] == '\n')
+    if (word[0] == ',')
     {
       continue;
     }
 
-    // Remove spaces from start of the line
-    while (myString[i] == ' ')
+    for (int i = 0; word[i] != '\0'; i++)
     {
-      i++;
-      continue;
+      word[i] = toupper(word[i]);
     }
-
-    // Add characters to new file skipping duplicate spaces
-    while (myString[i] != '\n')
-    {
-      if (myString[i] == ' ' && (myString[i + 1] == ' ' || myString[i + 1] == '\n'))
-      {
-        i++;
-        continue;
-      }
-      fputc(myString[i], foutptr);
-      i++;
-    }
-
-    fputc('\n', foutptr);
+    fputs(word, foutptr);
+    fputc(' ', foutptr);
   }
 
   fclose(finptr);
+  fclose(foutptr);
 }
-
