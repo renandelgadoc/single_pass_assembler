@@ -1,8 +1,13 @@
+#ifndef INSTRUCTION_TABLE_C
+#define INSTRUCTION_TABLE_C
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define TABLE_SIZE 14
+#include "hash_functions.c"
+
+// Create instructions table by reading file ./intruction.txt
 
 typedef struct instruction
 {
@@ -17,21 +22,11 @@ typedef struct instruction_table
     instruction **entries;
 } instruction_table;
 
-unsigned int hash(const char *key)
-{
-    unsigned int hashval = 0;
-    for (int i = 0; key[i] != '\0'; i++)
-    {
-        hashval = key[i] + (hashval << 5) - hashval;
-    }
-    return hashval % TABLE_SIZE;
-}
-
 // Insert a key-value pair into the hash table
 void instruction_table_put(instruction_table *table, const char *key, const int opcode, const int size)
 {
     // Calculate the hash value of the key
-    unsigned int index = hash(key);
+    unsigned int index = hash_key(key);
 
     // Search for the key in the linked list at the hash index
     instruction *current = table->entries[index];
@@ -78,7 +73,7 @@ instruction_table *instruction_table_create()
 instruction *instruction_table_get(instruction_table *table, const char *key)
 {
     // Calculate the hash value of the key
-    unsigned int index = hash(key);
+    unsigned int index = hash_key(key);
 
     // Search for the key in the linked list at the hash index
     instruction *current = table->entries[index];
@@ -96,30 +91,4 @@ instruction *instruction_table_get(instruction_table *table, const char *key)
     return NULL;
 }
 
-// // Delete a key-value pair from the hash table
-// void hash_table_delete(instruction_table* table, const char* key) {
-//     // Calculate the hash value of the key
-//     unsigned int index = hash(key);
-
-//     // Search for the key in the linked list at the hash index
-//     in* prev = NULL;
-//     hash_entry_t* current = table->entries[index];
-//     while (current != NULL) {
-//         if (strcmp(current->key, key) == 0) {
-//             // Key found, remove the entry from the linked list
-//             if (prev == NULL) {
-//                 table->entries[index] = current->next;
-//             } else {
-//                 prev->next = current->next;
-//             }
-//             free(current->key);
-//             free(current->value);
-//             free(current);
-//             return;
-//         }
-//         prev = current;
-//         current = current->next;
-//     }
-// }
-
-// Free the memory used by the hash table
+#endif

@@ -1,8 +1,11 @@
+#ifndef SYMBOL_TABLE_C
+#define SYMBOL_TABLE_C
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define TABLE_SIZE 14
+#include "hash_functions.c"
 
 typedef struct symbol
 {
@@ -15,23 +18,17 @@ typedef struct symbol
 typedef struct symbol_table
 {
     symbol **entries;
-} symbol_table;
 
-unsigned int hash2(const char *key)
-{
-    unsigned int hashval = 0;
-    for (int i = 0; key[i] != '\0'; i++)
-    {
-        hashval = key[i] + (hashval << 5) - hashval;
-    }
-    return hashval % TABLE_SIZE;
-}
+    // List used to store all keys in sequency
+    char **keys_list;
+    int size;
+} symbol_table;
 
 // Insert a key-value pair into the hash table
 void symbol_table_put(symbol_table *table, const char *key, const int value, const char *defined)
 {
     // Calculate the hash value of the key
-    unsigned int index = hash2(key);
+    unsigned int index = hash_key(key);
 
     // Search for the key in the linked list at the hash index
     symbol *current = table->entries[index];
@@ -56,6 +53,11 @@ void symbol_table_put(symbol_table *table, const char *key, const int value, con
     entry->next = table->entries[index];
     table->entries[index] = entry;
 
+    // Add key to keys_list
+    table->keys_list[table->size] = malloc((strlen(key) + 1) * sizeof(char));
+    strcpy(table->keys_list[table->size], key);
+    table->size++;
+
     return;
 }
 
@@ -64,6 +66,8 @@ symbol_table *symbol_table_create()
 {
     symbol_table *table = malloc(sizeof(symbol_table));
     table->entries = calloc(TABLE_SIZE, sizeof(symbol *));
+    table->size = 0;
+    table->keys_list  = malloc(TABLE_SIZE*sizeof(char *));
     return table;
 }
 
@@ -71,7 +75,7 @@ symbol_table *symbol_table_create()
 symbol *symbol_table_get(symbol_table *table, const char *key)
 {
     // Calculate the hash value of the key
-    unsigned int index = hash2(key);
+    unsigned int index = hash_key(key);
 
     // Search for the key in the linked list at the hash index
     symbol *current = table->entries[index];
@@ -89,30 +93,4 @@ symbol *symbol_table_get(symbol_table *table, const char *key)
     return NULL;
 }
 
-// // Delete a key-value pair from the hash table
-// void hash_table_delete(symbol_table* table, const char* key) {
-//     // Calculate the hash value of the key
-//     unsigned int index = hash(key);
-
-//     // Search for the key in the linked list at the hash index
-//     in* prev = NULL;
-//     hash_entry_t* current = table->entries[index];
-//     while (current != NULL) {
-//         if (strcmp(current->key, key) == 0) {
-//             // Key found, remove the entry from the linked list
-//             if (prev == NULL) {
-//                 table->entries[index] = current->next;
-//             } else {
-//                 prev->next = current->next;
-//             }
-//             free(current->key);
-//             free(current->value);
-//             free(current);
-//             return;
-//         }
-//         prev = current;
-//         current = current->next;
-//     }
-// }
-
-// Free the memory used by the hash table
+#endif
