@@ -41,7 +41,7 @@ void handle_symbol(char *word,
     // copy value from symbol to mem adress
     text[mem_pos] = current_symbol->value;
 
-    // update pendencies list
+    // update pendencies list, executes if symbol is not defined
     if (!strcmp(current_symbol->defined, "false"))
     {
         current_symbol->value = mem_pos;

@@ -10,6 +10,15 @@
 #include "string_functions.c"
 
 #define CHUTE 128
+void write_output_file(int *,
+                       FILE *,
+                       instruction_table *,
+                       symbol_table *,
+                       definition_table *,
+                       int,
+                       int *,
+                       int,
+                       int);
 
 void read_file_header(int *text,
                       FILE *fptr,
@@ -25,7 +34,7 @@ void read_file_header(int *text,
     // Check the label before the BEGIN directive
     if (!check_label(word))
     {
-        printf("%s", "Name not defined for module");
+        printf("%s\n", "Name not defined for module");
     }
     define_symbol(word, text, table, symbol_table, definition_table, mem_pos, current_line);
     memset(word, 0, 20);
@@ -33,29 +42,23 @@ void read_file_header(int *text,
     fscanf(fptr, "%s", word);
     if (strcmp(word, "BEGIN"))
     {
-        printf("%s", "BEGIN directive missing");
+        printf("%s", "BEGIN directive missing\n");
     }
     memset(word, 0, 20);
 
     // Add public ans extern variables to tables
-    char extern_var[20];
-    while (1)
+    while (fscanf(fptr, "%s", word) != EOF)
     {
-        fscanf(fptr, "%s", word);
 
         // Stop when SECTION TEXT starts
         if (!strcmp(word, "SECTION"))
             break;
 
         // Check if variable is EXTERN
-        else if (check_label(word))
+        else if (!strcmp(word, "EXTERN:"))
         {
-            fscanf(fptr, "%s", extern_var);
-            if (strcmp(extern_var, "EXTERN"))
-            {
-                printf("%s", "EXTERN directive missing");
-            }
-            memset(extern_var, 0, 20);
+            memset(word, 0, 20);
+            fscanf(fptr, "%s", word);
             define_symbol(word, text, table, symbol_table, definition_table, mem_pos, current_line);
             memset(word, 0, 20);
         }
@@ -64,7 +67,7 @@ void read_file_header(int *text,
         {
             if (strcmp(word, "PUBLIC"))
             {
-                printf("%s", "PUBLIC directive missing");
+                printf("%s\n", "PUBLIC directive missing");
             }
             memset(word, 0, 20);
             fscanf(fptr, "%s", word);
@@ -86,29 +89,30 @@ void single_pass(int num_files, char *files_name[])
     definition_table *definition_table = definition_table_create();
 
     FILE *fptr;
-    fptr = fopen("bin1-ligador.asm", "r");
+    fptr = fopen(files_name[1], "r");
 
     // List with translated assembly
     int *text = malloc(CHUTE * sizeof(int));
     char **text_test = malloc(4 * sizeof(char *));
     int *relative = malloc(CHUTE * sizeof(int));
 
-    if (num_files)
+    if (num_files > 2)
         read_file_header(text, fptr, table, symbol_table, definition_table, mem_pos, current_line);
+    else
+        fscanf(fptr, "%s", word);
 
     fscanf(fptr, "%s", word);
     if (strcmp(word, "TEXT") != 0)
     {
-        printf("%s", word);
-        printf("%s", "Text section not defined");
+        printf("%s\n", "Text section not defined");
     }
 
     memset(word, 0, 20);
 
-    while (1)
+    while (fscanf(fptr, "%s", word) != EOF)
     {
-        fscanf(fptr, "%s", word);
 
+        // STOP when SECTION DATA starts
         if (!strcmp(word, "SECTION"))
             break;
 
@@ -129,23 +133,27 @@ void single_pass(int num_files, char *files_name[])
             // Store instruction opcode at the list
             text[mem_pos] = current_instruction->opcode;
             mem_pos++;
+
+            // Read instructions paramenters
             for (int i = 0; i < current_instruction->size - 1; i++)
             {
                 if (fgetc(fptr) == '\n')
                 {
                     printf("%s %d\n",
-                           "Syntactic error: Instruction does not get right number of parameters in line",
+                           "Syntactic error: Instruction get less parameters than it needs, in line",
                            current_line);
                 };
 
                 fscanf(fptr, "%s", word);
 
+                // Check if tehere is two labels in the same line
                 if (check_label(word) == 1)
                 {
                     printf("%s %d\n", "Label in wrong position in line",
                            current_line);
                 }
 
+                // add memory position to relatives list
                 relative[relative_pos] = mem_pos;
                 relative_pos++;
 
@@ -155,20 +163,28 @@ void single_pass(int num_files, char *files_name[])
         }
         else
         {
-            printf("Lexical error: Word at line %d column %d is not a instruction",
+            printf("Lexical error: Word at line %d column %d is not a instruction\n",
                    current_line, mem_pos % 2);
         }
 
+        // Check if line ends after reading instructions parameters
         if (fgetc(fptr) != '\n')
         {
             printf("%s %d\n",
-                   "Syntactic error: Instruction does not get right number of parameters in line",
+                   "Syntactic error: Instruction does get more parameters than it needs, in line",
                    current_line);
         }
 
         memset(word, 0, 20);
         current_line++;
     }
+
+    fscanf(fptr, "%s", word);
+    if (strcmp(word, "DATA") != 0)
+    {
+        printf("%s\n", "DATA section not defined");
+    }
+    memset(word, 0, 20);
 
     int constant;
     while (fscanf(fptr, "%s", word) != EOF)
@@ -193,7 +209,7 @@ void single_pass(int num_files, char *files_name[])
         }
         else
         {
-            printf("erro 3");
+            printf("%s %d\n", "Diretiva diferente de CONST e SPACE na seção DATA na linha ", current_line);
         }
         memset(word, 0, 20);
     }
@@ -206,41 +222,70 @@ void single_pass(int num_files, char *files_name[])
     fputs("DEF", fptr);
     fputc('\n', fptr);
 
+    write_output_file(text,
+                      fptr,
+                      table,
+                      symbol_table,
+                      definition_table,
+                      mem_pos,
+                      relative,
+                      relative_pos,
+                      num_files);
+
+    free(text);
+    fclose(fptr);
+    // remove("bin_formatted.asm");
+}
+
+void write_output_file(int *text,
+                       FILE *fptr,
+                       instruction_table *table,
+                       symbol_table *symbol_table,
+                       definition_table *definition_table,
+                       int mem_pos,
+                       int *relative,
+                       int relative_pos,
+                       int num_files)
+{
     char str[16];
-    for (int i = 0; i < definition_table->size; i++)
+    if (num_files > 2)
     {
-        fputs(definition_table->keys_list[i], fptr);
-        fputc(' ', fptr);
-        sprintf(str, "%d", definition_table_get(definition_table, definition_table->keys_list[i])->value);
-        fputs(str, fptr);
+
+        for (int i = 0; i < definition_table->size; i++)
+        {
+            fputs(definition_table->keys_list[i], fptr);
+            fputc(' ', fptr);
+            sprintf(str, "%d", definition_table_get(definition_table, definition_table->keys_list[i])->value);
+            fputs(str, fptr);
+            fputc('\n', fptr);
+        }
+
+        fputs("Symbols", fptr);
+        fputc('\n', fptr);
+
+        for (int i = 0; i < symbol_table->size; i++)
+        {
+            fputs(symbol_table->keys_list[i], fptr);
+            fputc(' ', fptr);
+            sprintf(str, "%d", symbol_table_get(symbol_table, symbol_table->keys_list[i])->value);
+            fputs(str, fptr);
+            fputc('\n', fptr);
+        }
+
+        fputs("RELATIVOS", fptr);
+        putc('\n', fptr);
+
+        for (int i = 0; i < relative_pos; i++)
+        {
+            sprintf(str, "%d", relative[i]);
+            fputs(str, fptr);
+            fputc(' ', fptr);
+        }
+
+        fputc('\n', fptr);
+        fputs("CODE", fptr);
         fputc('\n', fptr);
     }
-
-    fputs("Symbols", fptr);
-    fputc('\n', fptr);
-
-    for (int i = 0; i < symbol_table->size; i++)
-    {
-        fputs(symbol_table->keys_list[i], fptr);
-        fputc(' ', fptr);
-        sprintf(str, "%d", symbol_table_get(symbol_table, symbol_table->keys_list[i])->value);
-        fputs(str, fptr);
-        fputc('\n', fptr);
-    }
-
-    fputs("RELATIVOS", fptr);
-    putc('\n', fptr);
-
-    for (int i = 0; i < relative_pos; i++)
-    {
-        sprintf(str, "%d", relative[i]);
-        fputs(str, fptr);
-        fputc(' ', fptr);
-    }
-
-    fputc('\n', fptr);
-    fputs("CODE", fptr);
-    fputc('\n', fptr);
 
     for (int i = 0; i < mem_pos; i++)
     {
@@ -248,8 +293,4 @@ void single_pass(int num_files, char *files_name[])
         fputs(str, fptr);
         fputc(' ', fptr);
     }
-
-    free(text);
-    fclose(fptr);
-    // remove("bin_formatted.asm");
 }
