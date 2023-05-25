@@ -9,12 +9,14 @@
 #include "instruction_table.c"
 #include "symbol_table.c"
 #include "definition_table.c"
+#include "use_table.c"
 #include "string_functions.c"
 
 void handle_symbol(char *word,
                    int *text,
                    instruction_table *table,
                    symbol_table *symbol_table,
+                   use_table *use_table,
                    int mem_pos,
                    int current_line)
 {
@@ -28,6 +30,12 @@ void handle_symbol(char *word,
 
     if (scanner(symbol_key))
         printf("%s %d\n", "Lexical error: invalid character in line", current_line);
+
+    use_table_symbol *use_table_symbol = use_table_get(use_table, symbol_key);
+    if(use_table_symbol){
+        use_table_put(use_table, symbol_key, mem_pos);
+        return;
+    }
 
     symbol *current_symbol = symbol_table_get(symbol_table, symbol_key);
 

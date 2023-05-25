@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
     start = clock();
 
     // write_formatted_file();
+    // char *teste[] = {"bin1-ligador.asm"};
     single_pass(argc, argv);
 
     end = clock();
