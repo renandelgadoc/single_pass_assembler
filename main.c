@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 
-// #include "format_file.c"
+#include "pre_processing.c"
 #include "single_pass.c"
 
 int main(int argc, char *argv[])
@@ -10,9 +10,15 @@ int main(int argc, char *argv[])
     double cpu_time_used;
     start = clock();
 
-    // write_formatted_file();
-    // char *teste[] = {"bin1-ligador.asm"};
-    single_pass(argc, argv);
+    // char *teste[] = {"", "bin1-ligador.asm"};
+    for (int i = 1; i < 2; i++)
+    {
+        char *file = write_formatted_file(argv[i]);
+        if (file)
+            single_pass(argc, file);
+        else
+            return 1;
+    }
 
     end = clock();
     cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;

@@ -31,7 +31,7 @@ void read_file_header(int *,
                       int,
                       int);
 
-void single_pass(int num_files, char *files_name[])
+void single_pass(int num_files, char *file_name)
 {
     int mem_pos = 0;
     int relative_pos = 0;
@@ -45,7 +45,7 @@ void single_pass(int num_files, char *files_name[])
     use_table *use_table = use_table_create();
 
     FILE *fptr;
-    fptr = fopen(files_name[1], "r");
+    fptr = fopen(file_name, "r");
 
     // List with translated assembly
     int *text = malloc(CHUTE * sizeof(int));
