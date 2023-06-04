@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 
 char* write_formatted_file(char *file)
 {
@@ -17,10 +18,12 @@ char* write_formatted_file(char *file)
         return NULL;
     }
 
-    char *output_file_name = strcat(strtok(file, "."), "_formated.asm");
+    // char *output_file_name ;
+    // strcpy(output_file_name, file);
+    file = strcat(strtok(file, "."), ".i");
 
     // Open output file for writing
-    outputFile = fopen(output_file_name, "w");
+    outputFile = fopen(file, "w");
     if (outputFile == NULL)
     {
         printf("Error creating output file.\n");
@@ -77,6 +80,6 @@ char* write_formatted_file(char *file)
 
     printf("File processing complete.\n");
 
-    return output_file_name;
+    return file;
 
 }

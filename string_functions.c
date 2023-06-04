@@ -1,7 +1,6 @@
 #ifndef STRING_FUNCTION_C
 #define STRING_FUNCTION_C
 
-
 int check_label(char *word)
 {
     int i = 0;
@@ -78,5 +77,13 @@ int convert_string_to_int(char *str, int current_line)
     return sign * result;
 }
 
+int check_string_is_number(char *str){
+        for (int i = 0; str[i]!= '\0'; i++)
+    {
+        if (isdigit(str[i]) == 0)
+              return 0;
+    }
+    return 1;
+}
 
 #endif

@@ -12,6 +12,7 @@ typedef struct symbol
     char *key;
     int value;
     char *defined;
+    int is_extern;
     struct symbol *next;
 } symbol;
 
@@ -37,9 +38,9 @@ void symbol_table_put(symbol_table *table, const char *key, const int value, con
         if (strcmp(current->key, key) == 0)
         {
             // Key already exists, update the value
-            current->value = value;
+            free(current->key);
             free(current->defined);
-            current->defined = strdup(defined);
+
             return;
         }
         current = current->next;
@@ -50,6 +51,7 @@ void symbol_table_put(symbol_table *table, const char *key, const int value, con
     entry->key = strdup(key);
     entry->value = value;
     entry->defined = strdup(defined);
+    entry->is_extern = 0;
     entry->next = table->entries[index];
     table->entries[index] = entry;
 
@@ -67,7 +69,7 @@ symbol_table *symbol_table_create()
     symbol_table *table = malloc(sizeof(symbol_table));
     table->entries = calloc(TABLE_SIZE, sizeof(symbol *));
     table->size = 0;
-    table->keys_list  = malloc(TABLE_SIZE*sizeof(char *));
+    table->keys_list = malloc(TABLE_SIZE * sizeof(char *));
     return table;
 }
 

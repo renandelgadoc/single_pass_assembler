@@ -10,7 +10,27 @@
 #include "symbol_functions.c"
 #include "string_functions.c"
 
-#define CHUTE 128
+#define CHUTE 256
+
+void read_file_header(int *,
+                      FILE *,
+                      instruction_table *,
+                      symbol_table *,
+                      definition_table *,
+                      use_table *,
+                      int,
+                      int);
+
+void section_data(int *,
+                  FILE *,
+                  instruction_table *,
+                  symbol_table *,
+                  definition_table *,
+                  use_table *,
+                  int *,
+                  int,
+                  char *);
+
 void write_output_file(int *,
                        FILE *,
                        instruction_table *,
@@ -21,15 +41,6 @@ void write_output_file(int *,
                        int *,
                        int,
                        int);
-
-void read_file_header(int *,
-                      FILE *,
-                      instruction_table *,
-                      symbol_table *,
-                      definition_table *,
-                      use_table *,
-                      int,
-                      int);
 
 void single_pass(int num_files, char *file_name)
 {
@@ -49,7 +60,7 @@ void single_pass(int num_files, char *file_name)
 
     // List with translated assembly
     int *text = malloc(CHUTE * sizeof(int));
-    char **text_test = malloc(4 * sizeof(char *));
+    // char **text = malloc(CHUTE * sizeof(char *));
     int *relative = malloc(CHUTE * sizeof(int));
 
     if (num_files > 2)
@@ -109,11 +120,7 @@ void single_pass(int num_files, char *file_name)
                            current_line);
                 }
 
-                // add memory position to relatives list
-                relative[relative_pos] = mem_pos;
-                relative_pos++;
-
-                handle_symbol(word, text, table, symbol_table, use_table, mem_pos, current_line);
+                handle_symbol(word, text, table, symbol_table, use_table, mem_pos, current_line, relative, &relative_pos);
                 mem_pos++;
             }
         }
@@ -145,35 +152,16 @@ void single_pass(int num_files, char *file_name)
     int constant;
     while (fscanf(fptr, "%s", word) != EOF)
     {
-        if (check_label(word) == 1)
-        {
-            define_symbol(word, text, table, symbol_table, definition_table, mem_pos, current_line);
-            memset(word, 0, 20);
-            continue;
-        }
-        else if (!strcmp(word, "CONST"))
-        {
-            memset(word, 0, 20);
-            fscanf(fptr, "%s", word);
-            text[mem_pos] = convert_string_to_int(word, current_line);
-            mem_pos++;
-        }
-        else if (!strcmp(word, "SPACE"))
-        {
-            text[mem_pos] = 0;
-            mem_pos++;
-        }
-        else
-        {
-            printf("%s %d\n", "Diretiva diferente de CONST e SPACE na seção DATA na linha ", current_line);
-        }
-        memset(word, 0, 20);
+        section_data(text, fptr, table, symbol_table, definition_table, use_table, &mem_pos, current_line, word);
     }
 
     fclose(fptr);
 
     // write on files
-    fptr = fopen("bin.exc", "w");
+    if (num_files > 2)
+        fptr = fopen(strcat(strtok(file_name, "."), ".obj"), "w");
+    else
+        fptr = fopen(strcat(strtok(file_name, "."), ".exc"), "w");
 
     write_output_file(text,
                       fptr,
@@ -236,6 +224,7 @@ void read_file_header(int *text,
             memset(word, 0, 20);
             fscanf(fptr, "%s", word);
             define_symbol(word, text, table, symbol_table, definition_table, mem_pos, current_line);
+            symbol_table_get(symbol_table, word)->is_extern = 1;
             use_table_put(use_table, word, -1);
             memset(word, 0, 20);
         }
@@ -251,6 +240,54 @@ void read_file_header(int *text,
             definition_table_put(definition_table, word, 0);
         }
     }
+}
+
+void section_data(int *text,
+                  FILE *fptr,
+                  instruction_table *table,
+                  symbol_table *symbol_table,
+                  definition_table *definition_table,
+                  use_table *use_table,
+                  int *mem_pos,
+                  int current_line,
+                  char *word)
+{
+    if (check_label(word) == 1)
+    {
+        define_symbol(word, text, table, symbol_table, definition_table, *mem_pos, current_line);
+        memset(word, 0, 20);
+        return;
+    }
+    else if (!strcmp(word, "CONST"))
+    {
+        memset(word, 0, 20);
+        fscanf(fptr, "%s", word);
+        text[*mem_pos] = convert_string_to_int(word, current_line);
+        (*mem_pos)++;
+    }
+    else if (!strcmp(word, "SPACE"))
+    {
+        text[*mem_pos] = 0;
+        (*mem_pos)++;
+        if (fscanf(fptr, "%s", word) != EOF)
+        {
+            if (check_string_is_number(word))
+            {
+                for (int i = 0; i < convert_string_to_int(word, current_line) - 1; i++)
+                {
+                    text[*mem_pos] = 0;
+                    (*mem_pos)++;
+                }
+                return;
+            }
+            section_data(text, fptr, table, symbol_table, definition_table, use_table, mem_pos, current_line, word);
+        }
+    }
+    else
+    {
+        printf("%s %d\n", "Diretiva diferente de CONST e SPACE na seção DATA na linha ", current_line);
+    }
+    memset(word, 0, 20);
 }
 
 void write_output_file(int *text,

@@ -18,7 +18,9 @@ void handle_symbol(char *word,
                    symbol_table *symbol_table,
                    use_table *use_table,
                    int mem_pos,
-                   int current_line)
+                   int current_line,
+                   int *relative,
+                   int *relative_pos)
 {
 
     if (instruction_table_get(table, word) != NULL)
@@ -32,9 +34,9 @@ void handle_symbol(char *word,
         printf("%s %d\n", "Lexical error: invalid character in line", current_line);
 
     use_table_symbol *use_table_symbol = use_table_get(use_table, symbol_key);
-    if(use_table_symbol){
+    if (use_table_symbol)
+    {
         use_table_put(use_table, symbol_key, mem_pos);
-        return;
     }
 
     symbol *current_symbol = symbol_table_get(symbol_table, symbol_key);
@@ -53,6 +55,12 @@ void handle_symbol(char *word,
     if (!strcmp(current_symbol->defined, "false"))
     {
         current_symbol->value = mem_pos;
+    }
+
+    if (current_symbol->is_extern == 0)
+    {
+        relative[*relative_pos] = mem_pos;
+        (*relative_pos)++;
     }
 }
 
