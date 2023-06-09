@@ -10,7 +10,7 @@
 #include "symbol_functions.c"
 #include "string_functions.c"
 
-#define CHUTE 1024
+#define CHUTE 4096
 
 void read_file_header(int *,
                       FILE *,
@@ -50,6 +50,7 @@ void single_pass(int num_files, char *file_name)
     int current_line = 1;
     int data_mem_pos = 0;
     char word[20];
+    char linebreak;
 
     instruction_table *table = instruction_table_create();
     symbol_table *symbol_table = symbol_table_create();
@@ -83,7 +84,7 @@ void single_pass(int num_files, char *file_name)
     fscanf(fptr, "%s", word);
     if (strcmp(word, "TEXT") != 0)
     {
-        printf("%s\n", "Text section not defined");
+        printf("%s %d\n", "Text section not defined in line ", current_line);
     }
 
     memset(word, 0, 20);
@@ -126,7 +127,8 @@ void single_pass(int num_files, char *file_name)
             // Read instructions paramenters
             for (int i = 0; i < current_instruction->size - 1; i++)
             {
-                if (fgetc(fptr) == '\n')
+                linebreak = fgetc(fptr);
+                if (linebreak == '\n' || linebreak == '\r')
                 {
                     printf("%s %d\n",
                            "Syntactic error: Instruction get less parameters than it needs, in line",
@@ -157,13 +159,13 @@ void single_pass(int num_files, char *file_name)
         }
         else
         {
-            printf("Lexical error: Word at line %d column %d is not a instruction\n",
-                   current_line, mem_pos % 2);
+            printf("Lexical error: Word at line %d is not a instruction\n",
+                   current_line);
         }
 
         // Check if line ends after reading instructions parameters
-        char aaaaa = fgetc(fptr);
-        if (aaaaa != '\n')
+        linebreak = fgetc(fptr);
+        if (linebreak != '\n' && linebreak != '\r')
         {
             printf("%s %d\n",
                    "Syntactic error: Instruction get more parameters than it needs, in line",
@@ -303,6 +305,7 @@ void section_data(int *text,
                   int *offset_list)
 {
     char word[20];
+    char linebreak;
     fscanf(fptr, "%s", word);
     if (strcmp(word, "DATA") != 0)
     {
@@ -342,7 +345,8 @@ void section_data(int *text,
         {
             text[*mem_pos] = 0;
             (*mem_pos)++;
-            if (fgetc(fptr) != '\n')
+            linebreak = fgetc(fptr);
+            if (linebreak != '\n' && linebreak != '\r')
             {
                 fscanf(fptr, "%s", word);
                 if (!check_string_is_number(word))
@@ -360,10 +364,11 @@ void section_data(int *text,
         }
         else
         {
-            printf("%s %d\n", "Diretiva diferente de CONST e SPACE na seção DATA na linha ", *current_line);
+            printf("%s %d\n", "Syntatic error: Directive different from CONST and SPACE in linha ", *current_line);
         }
         memset(word, 0, 20);
-        if (fgetc(fptr) != '\n')
+        linebreak = fgetc(fptr);
+        if (linebreak != '\n' && linebreak != '\r')
         {
             printf("%s %d\n",
                    "Syntactic error: Directive get more parameters than it needs, in line",
@@ -455,10 +460,9 @@ void write_output_file(int *text,
             fputc(' ', fptr);
         }
         fputc('\n', fptr);
+        fputs("CODE", fptr);
+        fputc('\n', fptr);
     }
-
-    fputs("CODE", fptr);
-    fputc('\n', fptr);
 
     for (int i = 0; i < mem_pos; i++)
     {

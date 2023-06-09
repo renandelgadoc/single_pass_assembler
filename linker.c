@@ -163,9 +163,12 @@ void linker(int num_fles, char *files[])
         fputc(' ', fptr);
     }
 
+    fflush(fptr);
     fclose(fptr);
+    free(output_file_name);
     free(code);
     free(definition_table);
+    return;
 }
 
 int main(int argc, char *argv[])

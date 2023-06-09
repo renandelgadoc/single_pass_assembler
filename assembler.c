@@ -10,7 +10,6 @@ int main(int argc, char *argv[])
     double cpu_time_used;
     start = clock();
 
-    // char *teste[] = {"", "tests/mod_a.asm", "tests/mod_b.asm"};
     // printf("%d\n", argc);
     for (int i = 1; i < argc; i++)
     {
