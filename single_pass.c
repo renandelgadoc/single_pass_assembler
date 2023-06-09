@@ -377,23 +377,23 @@ void write_output_file(int *text,
 {
     char str[16];
 
-    fputs("Symbols", fptr);
-    fputc('\n', fptr);
+    // fputs("Symbols", fptr);
+    // fputc('\n', fptr);
 
-    for (int i = 0; i < TABLE_SIZE; i++)
-    {
-        symbol *current_symbol = symbol_table->entries[i];
-        while (current_symbol != NULL)
-        {
-            fputs(current_symbol->key, fptr);
-            fputc(' ', fptr);
-            sprintf(str, "%d", current_symbol->value);
-            fputs(str, fptr);
-            fputc('\n', fptr);
-            current_symbol = current_symbol->next;
-        }
-    }
-    fputc('\n', fptr);
+    // for (int i = 0; i < TABLE_SIZE; i++)
+    // {
+    //     symbol *current_symbol = symbol_table->entries[i];
+    //     while (current_symbol != NULL)
+    //     {
+    //         fputs(current_symbol->key, fptr);
+    //         fputc(' ', fptr);
+    //         sprintf(str, "%d", current_symbol->value);
+    //         fputs(str, fptr);
+    //         fputc('\n', fptr);
+    //         current_symbol = current_symbol->next;
+    //     }
+    // }
+    // fputc('\n', fptr);
 
     if (num_files > 2)
     {
