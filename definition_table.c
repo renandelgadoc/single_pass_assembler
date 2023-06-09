@@ -18,9 +18,6 @@ typedef struct definition_table
 {
     def_table_symbol **entries;
     
-    // List used to store all keys in sequency
-    char **keys_list;
-    int size;
 } definition_table;
 
 // Insert a key-value pair into the hash table
@@ -49,11 +46,6 @@ void definition_table_put(definition_table *table, const char *key, const int va
     entry->next = table->entries[index];
     table->entries[index] = entry;
 
-    // Add key to keys_list
-    table->keys_list[table->size] = malloc((strlen(key) + 1) * sizeof(char));
-    strcpy(table->keys_list[table->size], key);
-    table->size++;
-
     return;
 }
 
@@ -63,8 +55,6 @@ definition_table *definition_table_create()
 
     definition_table *table = malloc(sizeof(definition_table));
     table->entries = calloc(TABLE_SIZE, sizeof(def_table_symbol *));
-    table->size = 0;
-    table->keys_list  = malloc(TABLE_SIZE*sizeof(char *));
     return table;
 }
 

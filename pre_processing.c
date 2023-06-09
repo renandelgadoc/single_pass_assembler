@@ -18,12 +18,12 @@ char* write_formatted_file(char *file)
         return NULL;
     }
 
-    // char *output_file_name ;
-    // strcpy(output_file_name, file);
-    file = strcat(strtok(file, "."), ".i");
+    char *output_file_name = (char *) malloc(strlen(file));
+    strcpy(output_file_name, file);
+    strcat(strtok(output_file_name, "."), ".i");
 
     // Open output file for writing
-    outputFile = fopen(file, "w");
+    outputFile = fopen(output_file_name, "w");
     if (outputFile == NULL)
     {
         printf("Error creating output file.\n");
@@ -80,6 +80,6 @@ char* write_formatted_file(char *file)
 
     // printf("File processing complete.\n");
 
-    return file;
+    return output_file_name;
 
 }

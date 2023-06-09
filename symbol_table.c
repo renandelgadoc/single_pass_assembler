@@ -19,10 +19,6 @@ typedef struct symbol
 typedef struct symbol_table
 {
     symbol **entries;
-
-    // List used to store all keys in sequency
-    char **keys_list;
-    int size;
 } symbol_table;
 
 // Insert a key-value pair into the hash table
@@ -55,11 +51,6 @@ void symbol_table_put(symbol_table *table, const char *key, const int value, con
     entry->next = table->entries[index];
     table->entries[index] = entry;
 
-    // Add key to keys_list
-    table->keys_list[table->size] = malloc((strlen(key) + 1) * sizeof(char));
-    strcpy(table->keys_list[table->size], key);
-    table->size++;
-
     return;
 }
 
@@ -68,8 +59,6 @@ symbol_table *symbol_table_create()
 {
     symbol_table *table = malloc(sizeof(symbol_table));
     table->entries = calloc(TABLE_SIZE, sizeof(symbol *));
-    table->size = 0;
-    table->keys_list = malloc(TABLE_SIZE * sizeof(char *));
     return table;
 }
 

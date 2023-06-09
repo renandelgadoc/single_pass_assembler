@@ -19,9 +19,6 @@ typedef struct use_table
 {
     use_table_symbol **entries;
 
-    // List used to store all keys in sequency
-    char **keys_list;
-    int size;
 } use_table;
 
 // Insert a key-value pair into the hash table
@@ -50,12 +47,6 @@ void use_table_put(use_table *table, const char *key, const int value)
     entry->addresses = malloc(TABLE_SIZE*sizeof(int));
     entry->addresses[entry->size] = value;
     table->entries[index] = entry;
-
-    // Add key to keys_list
-    table->keys_list[table->size] = malloc((strlen(key) + 1) * sizeof(char));
-    strcpy(table->keys_list[table->size], key);
-    table->size++;
-
     return;
 }
 
@@ -64,8 +55,6 @@ use_table *use_table_create()
 {
     use_table *table = malloc(sizeof(use_table));
     table->entries = calloc(TABLE_SIZE, sizeof(use_table_symbol *));
-    table->size = 0;
-    table->keys_list = malloc(TABLE_SIZE * sizeof(char *));
     return table;
 }
 

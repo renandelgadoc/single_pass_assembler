@@ -157,7 +157,8 @@ void single_pass(int num_files, char *file_name)
         }
 
         // Check if line ends after reading instructions parameters
-        if (fgetc(fptr) != '\n')
+        char aaaaa = fgetc(fptr);
+        if (aaaaa != '\n')
         {
             printf("%s %d\n",
                    "Syntactic error: Instruction get more parameters than it needs, in line",
@@ -181,10 +182,12 @@ void single_pass(int num_files, char *file_name)
     fclose(fptr);
 
     // write on files
+    char *output_file_name = (char *)malloc(strlen(file_name));
+    strcpy(output_file_name, file_name);
     if (num_files > 2)
-        fptr = fopen(strcat(strtok(file_name, "."), ".obj"), "w");
+        fptr = fopen(strcat(strtok(output_file_name, "."), ".obj"), "w");
     else
-        fptr = fopen(strcat(strtok(file_name, "."), ".exc"), "w");
+        fptr = fopen(strcat(strtok(output_file_name, "."), ".exc"), "w");
 
     write_output_file(text,
                       fptr,
@@ -377,15 +380,19 @@ void write_output_file(int *text,
     fputs("Symbols", fptr);
     fputc('\n', fptr);
 
-    for (int i = 0; i < symbol_table->size; i++)
+    for (int i = 0; i < TABLE_SIZE; i++)
     {
-        fputs(symbol_table->keys_list[i], fptr);
-        fputc(' ', fptr);
-        sprintf(str, "%d", symbol_table_get(symbol_table, symbol_table->keys_list[i])->value);
-        fputs(str, fptr);
-        fputc('\n', fptr);
+        symbol *current_symbol = symbol_table->entries[i];
+        while (current_symbol != NULL)
+        {
+            fputs(current_symbol->key, fptr);
+            fputc(' ', fptr);
+            sprintf(str, "%d", current_symbol->value);
+            fputs(str, fptr);
+            fputc('\n', fptr);
+            current_symbol = current_symbol->next;
+        }
     }
-
     fputc('\n', fptr);
 
     if (num_files > 2)
@@ -394,45 +401,55 @@ void write_output_file(int *text,
         fputs("USO", fptr);
         fputc('\n', fptr);
 
-        for (int i = 0; i < use_table->size; i++)
+        for (int i = 0; i < TABLE_SIZE; i++)
         {
-            use_table_symbol *current_symbol = use_table_get(use_table, use_table->keys_list[i]);
-            for (int j = 0; j < current_symbol->size; j++)
+
+            use_table_symbol *current_symbol = use_table->entries[i];
+            while (current_symbol != NULL)
             {
-                fputs(use_table->keys_list[i], fptr);
-                fputc(' ', fptr);
-                sprintf(str, "%d", current_symbol->addresses[j]);
-                fputs(str, fptr);
-                fputc('\n', fptr);
+                for (int j = 0; j < current_symbol->size; j++)
+                {
+                    fputs(current_symbol->key, fptr);
+                    fputc(' ', fptr);
+                    sprintf(str, "%d", current_symbol->addresses[j]);
+                    fputs(str, fptr);
+                    fputc('\n', fptr);
+                }
+                current_symbol = current_symbol->next;
             }
         }
+    }
 
-        fputs("DEF", fptr);
-        fputc('\n', fptr);
+    fputs("DEF", fptr);
+    fputc('\n', fptr);
 
-        for (int i = 0; i < definition_table->size; i++)
+    for (int i = 0; i < TABLE_SIZE; i++)
+    {
+        def_table_symbol *current_symbol = definition_table->entries[i];
+        while (current_symbol != NULL)
         {
-            fputs(definition_table->keys_list[i], fptr);
+            fputs(current_symbol->key, fptr);
             fputc(' ', fptr);
-            sprintf(str, "%d", definition_table_get(definition_table, definition_table->keys_list[i])->value);
+            sprintf(str, "%d", current_symbol->value);
             fputs(str, fptr);
             fputc('\n', fptr);
+            current_symbol = current_symbol->next;
         }
-
-        fputs("RELATIVOS", fptr);
-        putc('\n', fptr);
-
-        for (int i = 0; i < relative_pos; i++)
-        {
-            sprintf(str, "%d", relative[i]);
-            fputs(str, fptr);
-            fputc(' ', fptr);
-        }
-
-        fputc('\n', fptr);
-        fputs("CODE", fptr);
-        fputc('\n', fptr);
     }
+
+    fputs("RELATIVOS", fptr);
+    putc('\n', fptr);
+
+    for (int i = 0; i < relative_pos; i++)
+    {
+        sprintf(str, "%d", relative[i]);
+        fputs(str, fptr);
+        fputc(' ', fptr);
+    }
+
+    fputc('\n', fptr);
+    fputs("CODE", fptr);
+    fputc('\n', fptr);
 
     for (int i = 0; i < mem_pos; i++)
     {

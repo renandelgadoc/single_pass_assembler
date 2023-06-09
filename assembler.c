@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     double cpu_time_used;
     start = clock();
 
-    // char *teste[] = {"", "tests/mod_a.i", "tests/mod_b.i"};
+    // char *teste[] = {"", "tests/mod_a.asm", "tests/mod_b.asm"};
     // printf("%d\n", argc);
     for (int i = 1; i < argc; i++)
     {
@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
         char *file = write_formatted_file(argv[i]);
         // printf("%s\n",file);
         if (file)
-            single_pass(argc, argv[i]);
+            single_pass(argc, file);
         else
             return 1;
     }
