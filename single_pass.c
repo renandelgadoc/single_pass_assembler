@@ -418,36 +418,36 @@ void write_output_file(int *text,
                 current_symbol = current_symbol->next;
             }
         }
-    }
 
-    fputs("DEF", fptr);
-    fputc('\n', fptr);
+        fputs("DEF", fptr);
+        fputc('\n', fptr);
 
-    for (int i = 0; i < TABLE_SIZE; i++)
-    {
-        def_table_symbol *current_symbol = definition_table->entries[i];
-        while (current_symbol != NULL)
+        for (int i = 0; i < TABLE_SIZE; i++)
         {
-            fputs(current_symbol->key, fptr);
-            fputc(' ', fptr);
-            sprintf(str, "%d", current_symbol->value);
-            fputs(str, fptr);
-            fputc('\n', fptr);
-            current_symbol = current_symbol->next;
+            def_table_symbol *current_symbol = definition_table->entries[i];
+            while (current_symbol != NULL)
+            {
+                fputs(current_symbol->key, fptr);
+                fputc(' ', fptr);
+                sprintf(str, "%d", current_symbol->value);
+                fputs(str, fptr);
+                fputc('\n', fptr);
+                current_symbol = current_symbol->next;
+            }
         }
+
+        fputs("RELATIVOS", fptr);
+        putc('\n', fptr);
+
+        for (int i = 0; i < relative_pos; i++)
+        {
+            sprintf(str, "%d", relative[i]);
+            fputs(str, fptr);
+            fputc(' ', fptr);
+        }
+        fputc('\n', fptr);
     }
 
-    fputs("RELATIVOS", fptr);
-    putc('\n', fptr);
-
-    for (int i = 0; i < relative_pos; i++)
-    {
-        sprintf(str, "%d", relative[i]);
-        fputs(str, fptr);
-        fputc(' ', fptr);
-    }
-
-    fputc('\n', fptr);
     fputs("CODE", fptr);
     fputc('\n', fptr);
 

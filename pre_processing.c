@@ -2,11 +2,13 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
-char* write_formatted_file(char *file)
+char *write_formatted_file(char *file)
 {
-    FILE *inputFile, *outputFile;
+    FILE *inputFile, *midFile, *outputFile;
     char line[100];
+    int i;
     bool emptyLine = true;
     bool prevSpace = false;
 
@@ -18,13 +20,13 @@ char* write_formatted_file(char *file)
         return NULL;
     }
 
-    char *output_file_name = (char *) malloc(strlen(file));
-    strcpy(output_file_name, file);
-    strcat(strtok(output_file_name, "."), ".i");
+    char *mid_file_name = (char *)malloc(strlen(file));
+    strcpy(mid_file_name, file);
+    strtok(mid_file_name, ".");
 
     // Open output file for writing
-    outputFile = fopen(output_file_name, "w");
-    if (outputFile == NULL)
+    midFile = fopen(mid_file_name, "w");
+    if (midFile == NULL)
     {
         printf("Error creating output file.\n");
         return NULL;
@@ -42,20 +44,64 @@ char* write_formatted_file(char *file)
         while (*start == ' ')
             start++;
 
-        char *end = line + strlen(line) - 1;
+        char *end = line;
+
+        while (*end != '\0' && *end != ';')
+            end++;
+        end--;
+
         while (end > start && *end == ' ')
             end--;
 
         *(end + 1) = '\0';
 
+        // Format offset from "A + 2" to "A+2"
+        int length = strlen(start);
+        i = 0;
+        while (i < length)
+        {
+            if (start[i] == '+')
+            {
+                int j = i - 1;
+                while (j >= 0 && start[j] == ' ')
+                {
+                    // Shift characters left to remove space
+                    for (int k = j; k < length - 1; k++)
+                    {
+                        start[k] = start[k + 1];
+                    }
+                    start[length - 1] = '\0';
+                    length--;
+                    j--;
+                }
+
+                j = i;
+                while (j < length && start[j] == ' ')
+                {
+                    // Shift characters left to remove space
+                    for (int k = j; k < length - 1; k++)
+                    {
+                        start[k] = start[k + 1];
+                    }
+                    start[length - 1] = '\0';
+                    length--;
+                    j++;
+                }
+            }
+
+            i++;
+        }
+
         // Remove duplicate spaces within the line
         char modifiedLine[1000];
-        int i = 0;
+        i = 0;
         for (int j = 0; j < strlen(start); j++)
         {
-            if (start[j] != ' ' || !prevSpace)
+            if (start[j] == ',')
+                continue;
+            else if (start[j] != ' ' || !prevSpace)
             {
-                modifiedLine[i++] = start[j];
+                modifiedLine[i++] = toupper(start[j]);
                 prevSpace = (start[j] == ' ');
             }
         }
@@ -65,21 +111,79 @@ char* write_formatted_file(char *file)
         if (strlen(modifiedLine) > 0)
         {
             // Write the modified line to the output file
-            fputs(modifiedLine, outputFile);
+            fputs(modifiedLine, midFile);
             if (modifiedLine[strlen(modifiedLine) - 1] == ':')
-                fputc(' ', outputFile);
+                fputc(' ', midFile);
             else
-                fputc('\n', outputFile);
+                fputc('\n', midFile);
             emptyLine = false;
         }
     }
 
-    // Close the input and output files
     fclose(inputFile);
-    fclose(outputFile);
+    fclose(midFile);
+
+    midFile = fopen(mid_file_name, "r");
+
+    char *output_file_name = (char *)malloc(strlen(file));
+    strcpy(output_file_name, file);
+    strcat(strtok(output_file_name, "."), ".i");
+
+    outputFile = fopen(output_file_name, "w");
+
+    // write Header
+
+    while (fgets(line, sizeof(line), inputFile) != NULL)
+    {
+        if (strcmp(line, "SECTION TEXT\n") == 0 || strcmp(line, "SECTION DATA\n") == 0)
+            break;
+        fputs(line, outputFile);
+    }
+
+    // Find SECTION TEXT
+    rewind(midFile);
+    while (fgets(line, sizeof(line), inputFile) != NULL)
+    {
+        if (strcmp(line, "SECTION TEXT\n") == 0)
+        {
+            fputs(line, outputFile);
+            break;
+        }
+    }
+
+    // Write SECTION TEXT
+    while (fgets(line, sizeof(line), inputFile) != NULL)
+    {
+        if (strcmp(line, "SECTION DATA\n") == 0)
+            break;
+        fputs(line, outputFile);
+    }
+
+    // Find SECTION DATA
+    rewind(midFile);
+    while (fgets(line, sizeof(line), inputFile) != NULL)
+    {
+        if (strcmp(line, "SECTION DATA\n") == 0)
+        {
+            fputs(line, outputFile);
+            break;
+        }
+    }
+
+    // Write SECTION DATA
+    while (fgets(line, sizeof(line), inputFile) != NULL)
+    {
+        if (strcmp(line, "SECTION TEXT\n") == 0)
+            break;
+        fputs(line, outputFile);
+    }
 
     // printf("File processing complete.\n");
 
-    return output_file_name;
+    // Close the input and output files
+    fclose(outputFile);
+    remove(mid_file_name);
+    fclose(midFile);
 
+    return output_file_name;
 }
