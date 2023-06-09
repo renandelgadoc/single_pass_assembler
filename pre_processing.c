@@ -107,10 +107,8 @@ char *write_formatted_file(char *file)
         }
         modifiedLine[i] = '\0';
 
-        // Check if the modified line is empty
         if (strlen(modifiedLine) > 0)
         {
-            // Write the modified line to the output file
             fputs(modifiedLine, midFile);
             if (modifiedLine[strlen(modifiedLine) - 1] == ':')
                 fputc(' ', midFile);
@@ -130,10 +128,9 @@ char *write_formatted_file(char *file)
     strcat(strtok(output_file_name, "."), ".i");
 
     outputFile = fopen(output_file_name, "w");
-
     // write Header
 
-    while (fgets(line, sizeof(line), inputFile) != NULL)
+    while (fgets(line, sizeof(line), midFile) != NULL)
     {
         if (strcmp(line, "SECTION TEXT\n") == 0 || strcmp(line, "SECTION DATA\n") == 0)
             break;
@@ -142,7 +139,7 @@ char *write_formatted_file(char *file)
 
     // Find SECTION TEXT
     rewind(midFile);
-    while (fgets(line, sizeof(line), inputFile) != NULL)
+    while (fgets(line, sizeof(line), midFile) != NULL)
     {
         if (strcmp(line, "SECTION TEXT\n") == 0)
         {
@@ -152,7 +149,7 @@ char *write_formatted_file(char *file)
     }
 
     // Write SECTION TEXT
-    while (fgets(line, sizeof(line), inputFile) != NULL)
+    while (fgets(line, sizeof(line), midFile) != NULL)
     {
         if (strcmp(line, "SECTION DATA\n") == 0)
             break;
@@ -161,7 +158,7 @@ char *write_formatted_file(char *file)
 
     // Find SECTION DATA
     rewind(midFile);
-    while (fgets(line, sizeof(line), inputFile) != NULL)
+    while (fgets(line, sizeof(line), midFile) != NULL)
     {
         if (strcmp(line, "SECTION DATA\n") == 0)
         {
@@ -171,7 +168,7 @@ char *write_formatted_file(char *file)
     }
 
     // Write SECTION DATA
-    while (fgets(line, sizeof(line), inputFile) != NULL)
+    while (fgets(line, sizeof(line), midFile) != NULL)
     {
         if (strcmp(line, "SECTION TEXT\n") == 0)
             break;
