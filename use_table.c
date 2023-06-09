@@ -44,8 +44,9 @@ void use_table_put(use_table *table, const char *key, const int value)
     use_table_symbol *entry = malloc(sizeof(use_table_symbol));
     entry->key = strdup(key);
     entry->size = 0;
-    entry->addresses = malloc(TABLE_SIZE*sizeof(int));
+    entry->addresses = malloc(TABLE_SIZE * sizeof(int));
     entry->addresses[entry->size] = value;
+    entry->next = table->entries[index];
     table->entries[index] = entry;
     return;
 }

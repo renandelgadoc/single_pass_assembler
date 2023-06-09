@@ -341,7 +341,7 @@ void section_data(int *text,
                 {
                     printf("%s %d\n", "Syntatic error: parameter is not a number in SPACE Directive", *current_line);
                 }
-                for (int i = 0; i < convert_string_to_int(word, *current_line) - 1; i++)
+                for (int i = 0; i < atoi(word) - 1; i++)
                 {
                     text[*mem_pos] = 0;
                     (*mem_pos)++;

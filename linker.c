@@ -150,7 +150,10 @@ void linker(int num_fles, char *files[])
     //     // fputc('\n', fptr);
     // }
 
-    fptr = fopen(strcat(strtok(files[1], "."), ".exc"), "w");
+    char *output_file_name = (char *)malloc(strlen(files[1]));
+    strcpy(output_file_name, files[1]);
+    strcat(strtok(output_file_name, "."), ".exc");
+    fptr = fopen(output_file_name, "w");
 
     char str[16];
     for (int i = 0; i < mem_pos; i++)
@@ -170,7 +173,6 @@ int main(int argc, char *argv[])
     clock_t start, end;
     double cpu_time_used;
     start = clock();
-
 
     // char *teste[] = {"", "tests/mod_a.asm", "tests/mod_b.asm"};
     linker(argc, argv);
