@@ -78,6 +78,8 @@ void single_pass(int num_files, char *file_name)
     else
         fscanf(fptr, "%s", word);
 
+    current_line++;
+
     fscanf(fptr, "%s", word);
     if (strcmp(word, "TEXT") != 0)
     {
@@ -91,7 +93,10 @@ void single_pass(int num_files, char *file_name)
 
         // STOP when SECTION DATA starts
         if (!strcmp(word, "SECTION"))
+        {
+            current_line++;
             break;
+        }
 
         else if (check_label(word) == 1)
         {
@@ -225,7 +230,7 @@ void read_file_header(int *text,
     // Check the label before the BEGIN directive
     if (!check_label(word))
     {
-        printf("%s\n", "Name not defined for module");
+        printf("%s\n", "Name not defined for module in line 1");
     }
     define_symbol(word,
                   text,
@@ -240,9 +245,11 @@ void read_file_header(int *text,
     fscanf(fptr, "%s", word);
     if (strcmp(word, "BEGIN"))
     {
-        printf("%s", "BEGIN directive missing\n");
+        printf("%s", "BEGIN directive missing in line 1\n");
     }
     memset(word, 0, 20);
+
+    (*current_line)++;
 
     // Add public ans extern variables to tables
     while (fscanf(fptr, "%s", word) != EOF)
@@ -250,8 +257,9 @@ void read_file_header(int *text,
 
         // Stop when SECTION TEXT starts
         if (!strcmp(word, "SECTION"))
+        {
             break;
-
+        }
         // Check if variable is EXTERN
         else if (!strcmp(word, "EXTERN:"))
         {
@@ -274,7 +282,7 @@ void read_file_header(int *text,
         {
             if (strcmp(word, "PUBLIC"))
             {
-                printf("%s\n", "PUBLIC directive missing");
+                printf("%s %d\n", "Directive diferent from PUBLIC or EXTERN int line ", *current_line);
             }
             memset(word, 0, 20);
             fscanf(fptr, "%s", word);
@@ -347,6 +355,7 @@ void section_data(int *text,
                     (*mem_pos)++;
                 }
             }
+            (*current_line)++;
             continue;
         }
         else

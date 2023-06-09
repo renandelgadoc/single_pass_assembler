@@ -1,6 +1,11 @@
 #ifndef STRING_FUNCTION_C
 #define STRING_FUNCTION_C
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
 int check_label(char *word)
 {
     int i = 0;
@@ -38,7 +43,7 @@ int scanner(char *str)
 int convert_string_to_int(char *str, int current_line)
 {
     int result = 0;
-    int sign = 0;
+    int sign = 1;
     int base = 10;
     int i = 0;
 
