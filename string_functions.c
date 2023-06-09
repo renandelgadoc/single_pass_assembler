@@ -15,7 +15,7 @@ int check_label(char *word)
     return 0;
 }
 
-// Check for Lexical errors 
+// Check for Lexical errors
 int scanner(char *str)
 {
     int i;
@@ -38,11 +38,16 @@ int scanner(char *str)
 int convert_string_to_int(char *str, int current_line)
 {
     int result = 0;
-    int sign = 1;
+    int sign = 0;
     int base = 10;
     int i = 0;
 
-    if (str[0] == '-')
+    if (str[0] == '+')
+    {
+        sign = 1; // Set sign to negative if string starts with '-'
+        i++;
+    }
+    else if (str[0] == '-')
     {
         sign = -1; // Set sign to negative if string starts with '-'
         i++;
@@ -77,11 +82,12 @@ int convert_string_to_int(char *str, int current_line)
     return sign * result;
 }
 
-int check_string_is_number(char *str){
-        for (int i = 0; str[i]!= '\0'; i++)
+int check_string_is_number(char *str)
+{
+    for (int i = 0; str[i] != '\0'; i++)
     {
         if (isdigit(str[i]) == 0)
-              return 0;
+            return 0;
     }
     return 1;
 }

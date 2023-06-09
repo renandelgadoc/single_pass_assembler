@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 #include "string_functions.c"
 
 #include "symbol_table.c"
@@ -38,7 +39,7 @@ void linker(int num_fles, char *files[])
         while (fscanf(fptr, "%s", word) != EOF)
         {
             // printf("%s\n", word);
-            code[mem_pos] = convert_string_to_int(word, mem_pos);
+            code[mem_pos] = atoi(word);
             mem_pos++;
         }
 
@@ -65,7 +66,7 @@ void linker(int num_fles, char *files[])
             fscanf(fptr, "%s", word);
 
             // printf("%s\n", word);
-            definition_table_put(definition_table, key, convert_string_to_int(word, mem_pos) + offset[i - 1]);
+            definition_table_put(definition_table, key, atoi(word) + offset[i - 1]);
         }
 
         fclose(fptr);
@@ -99,7 +100,7 @@ void linker(int num_fles, char *files[])
 
             def_table_symbol *symbol = definition_table_get(definition_table, key);
 
-            code[convert_string_to_int(word, mem_pos) + offset[i - 1]] = symbol->value;
+            code[atoi(word) + offset[i - 1]] += symbol->value;
         }
 
         fclose(fptr);
@@ -124,16 +125,16 @@ void linker(int num_fles, char *files[])
             if (strcmp(word, "CODE") == 0)
                 break;
 
-            code[convert_string_to_int(word, mem_pos) + offset[i-1]] += offset[i - 1];
+            code[atoi(word) + offset[i - 1]] += offset[i - 1];
         }
 
         fclose(fptr);
     }
 
-    for (int i = 0; i < mem_pos; i++)
-    {
-        printf("%d\n", code[i]);
-    }
+    // for (int i = 0; i < mem_pos; i++)
+    // {
+    //     printf("%d\n", code[i]);
+    // }
 
     // for (int i = 0; i < 4; i++)
     // {
@@ -149,6 +150,34 @@ void linker(int num_fles, char *files[])
     //     // fputc('\n', fptr);
     // }
 
+    fptr = fopen(strcat(strtok(files[1], "."), ".exc"), "w");
+
+    char str[16];
+    for (int i = 0; i < mem_pos; i++)
+    {
+        sprintf(str, "%d", code[i]);
+        fputs(str, fptr);
+        fputc(' ', fptr);
+    }
+
+    fclose(fptr);
     free(code);
     free(definition_table);
+}
+
+int main(int argc, char *argv[])
+{
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
+
+
+    // char *teste[] = {"", "tests/mod_a.asm", "tests/mod_b.asm"};
+    linker(argc, argv);
+
+    end = clock();
+    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    printf("Program runtime: %f seconds\n", cpu_time_used);
+
+    return 0;
 }

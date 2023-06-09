@@ -3,7 +3,6 @@
 
 #include "pre_processing.c"
 #include "single_pass.c"
-#include "linker.c"
 
 int main(int argc, char *argv[])
 {
@@ -11,7 +10,7 @@ int main(int argc, char *argv[])
     double cpu_time_used;
     start = clock();
 
-    // char *teste[] = {"", "mod_a.asm", "mod_b.asm"};
+    // char *teste[] = {"", "tests/mod_a.i", "tests/mod_b.i"};
     // printf("%d\n", argc);
     for (int i = 1; i < argc; i++)
     {
@@ -19,15 +18,10 @@ int main(int argc, char *argv[])
         char *file = write_formatted_file(argv[i]);
         // printf("%s\n",file);
         if (file)
-            single_pass(argc, file);
+            single_pass(argc, argv[i]);
         else
             return 1;
     }
-
-    // char *teste[] = {"", "tests/mod_a.obj", "tests/mod_b.obj"};
-
-    if (argc > 2)
-        linker(argc, argv);
 
     end = clock();
     cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;

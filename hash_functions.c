@@ -1,7 +1,7 @@
 #ifndef HASH_FUNCTIONS_C
 #define HASH_FUNCTIONS_C
 
-#define TABLE_SIZE 128
+#define TABLE_SIZE 20
 
 unsigned int hash_key(const char *key)
 {

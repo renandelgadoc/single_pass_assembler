@@ -20,7 +20,8 @@ void handle_symbol(char *word,
                    int mem_pos,
                    int current_line,
                    int *relative,
-                   int *relative_pos)
+                   int *relative_pos,
+                   int *offset_list)
 {
 
     if (instruction_table_get(table, word) != NULL)
@@ -30,14 +31,27 @@ void handle_symbol(char *word,
 
     char *symbol_key = strtok(word, ":");
 
+    // add offset to offset list
+    int i = 0;
+    char *offset;
+    while (symbol_key[i] != '\0')
+    {
+        if (symbol_key[i] == '+' || symbol_key[i] == '-')
+        {
+            offset = (char *)malloc(strlen(&symbol_key[i]));
+            strcpy(offset, &symbol_key[i]);
+            offset_list[mem_pos] = convert_string_to_int(offset, current_line);
+            symbol_key[i] = '\0';
+        }
+        i++;
+    }
+
     if (scanner(symbol_key))
         printf("%s %d\n", "Lexical error: invalid character in line", current_line);
 
     use_table_symbol *use_table_symbol = use_table_get(use_table, symbol_key);
     if (use_table_symbol)
-    {
         use_table_put(use_table, symbol_key, mem_pos);
-    }
 
     symbol *current_symbol = symbol_table_get(symbol_table, symbol_key);
 
@@ -50,6 +64,8 @@ void handle_symbol(char *word,
 
     // copy value from symbol to mem adress
     text[mem_pos] = current_symbol->value;
+    if (use_table_symbol)
+        text[mem_pos] += offset_list[mem_pos];
 
     // update pendencies list, executes if symbol is not defined
     if (!strcmp(current_symbol->defined, "false"))
@@ -70,7 +86,8 @@ void define_symbol(char *word,
                    symbol_table *symbol_table,
                    definition_table *definition_table,
                    int mem_pos,
-                   int current_line)
+                   int current_line,
+                   int *offset_list)
 {
 
     char *symbol_key = strtok(word, ":");
@@ -94,6 +111,8 @@ void define_symbol(char *word,
     {
         temp = text[last];
         text[last] = mem_pos;
+        if (offset_list[last])
+            text[last] += offset_list[last];
         last = temp;
     }
 

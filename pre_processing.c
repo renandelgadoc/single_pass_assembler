@@ -78,7 +78,7 @@ char* write_formatted_file(char *file)
     fclose(inputFile);
     fclose(outputFile);
 
-    printf("File processing complete.\n");
+    // printf("File processing complete.\n");
 
     return file;
 

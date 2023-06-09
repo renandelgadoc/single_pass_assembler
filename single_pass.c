@@ -10,7 +10,7 @@
 #include "symbol_functions.c"
 #include "string_functions.c"
 
-#define CHUTE 256
+#define CHUTE 1024
 
 void read_file_header(int *,
                       FILE *,
@@ -19,7 +19,8 @@ void read_file_header(int *,
                       definition_table *,
                       use_table *,
                       int,
-                      int);
+                      int *,
+                      int *);
 
 void section_data(int *,
                   FILE *,
@@ -28,8 +29,8 @@ void section_data(int *,
                   definition_table *,
                   use_table *,
                   int *,
-                  int,
-                  char *);
+                  int *,
+                  int *);
 
 void write_output_file(int *,
                        FILE *,
@@ -46,7 +47,7 @@ void single_pass(int num_files, char *file_name)
 {
     int mem_pos = 0;
     int relative_pos = 0;
-    int current_line = 0;
+    int current_line = 1;
     int data_mem_pos = 0;
     char word[20];
 
@@ -60,11 +61,20 @@ void single_pass(int num_files, char *file_name)
 
     // List with translated assembly
     int *text = malloc(CHUTE * sizeof(int));
+    int *offset_list = malloc(CHUTE * sizeof(int));
     // char **text = malloc(CHUTE * sizeof(char *));
     int *relative = malloc(CHUTE * sizeof(int));
 
     if (num_files > 2)
-        read_file_header(text, fptr, table, symbol_table, definition_table, use_table, mem_pos, current_line);
+        read_file_header(text,
+                         fptr,
+                         table,
+                         symbol_table,
+                         definition_table,
+                         use_table,
+                         mem_pos,
+                         &current_line,
+                         offset_list);
     else
         fscanf(fptr, "%s", word);
 
@@ -86,7 +96,14 @@ void single_pass(int num_files, char *file_name)
         else if (check_label(word) == 1)
         {
             // line_has_label = 1;
-            define_symbol(word, text, table, symbol_table, definition_table, mem_pos, current_line);
+            define_symbol(word,
+                          text,
+                          table,
+                          symbol_table,
+                          definition_table,
+                          mem_pos,
+                          current_line,
+                          offset_list);
             memset(word, 0, 20);
             fscanf(fptr, "%s", word);
             if (!strcmp(word, "DATA"))
@@ -120,7 +137,16 @@ void single_pass(int num_files, char *file_name)
                            current_line);
                 }
 
-                handle_symbol(word, text, table, symbol_table, use_table, mem_pos, current_line, relative, &relative_pos);
+                handle_symbol(word,
+                              text,
+                              table,
+                              symbol_table,
+                              use_table,
+                              mem_pos,
+                              current_line,
+                              relative,
+                              &relative_pos,
+                              offset_list);
                 mem_pos++;
             }
         }
@@ -134,26 +160,23 @@ void single_pass(int num_files, char *file_name)
         if (fgetc(fptr) != '\n')
         {
             printf("%s %d\n",
-                   "Syntactic error: Instruction does get more parameters than it needs, in line",
+                   "Syntactic error: Instruction get more parameters than it needs, in line",
                    current_line);
         }
 
         memset(word, 0, 20);
-        current_line++;
+        (current_line)++;
     }
 
-    fscanf(fptr, "%s", word);
-    if (strcmp(word, "DATA") != 0)
-    {
-        printf("%s\n", "DATA section not defined");
-    }
-    memset(word, 0, 20);
-
-    int constant;
-    while (fscanf(fptr, "%s", word) != EOF)
-    {
-        section_data(text, fptr, table, symbol_table, definition_table, use_table, &mem_pos, current_line, word);
-    }
+    section_data(text,
+                 fptr,
+                 table,
+                 symbol_table,
+                 definition_table,
+                 use_table,
+                 &mem_pos,
+                 &current_line,
+                 offset_list);
 
     fclose(fptr);
 
@@ -190,7 +213,8 @@ void read_file_header(int *text,
                       definition_table *definition_table,
                       use_table *use_table,
                       int mem_pos,
-                      int current_line)
+                      int *current_line,
+                      int *offset_list)
 {
     char word[20];
     fscanf(fptr, "%s", word);
@@ -200,7 +224,14 @@ void read_file_header(int *text,
     {
         printf("%s\n", "Name not defined for module");
     }
-    define_symbol(word, text, table, symbol_table, definition_table, mem_pos, current_line);
+    define_symbol(word,
+                  text,
+                  table,
+                  symbol_table,
+                  definition_table,
+                  mem_pos,
+                  *current_line,
+                  offset_list);
     memset(word, 0, 20);
 
     fscanf(fptr, "%s", word);
@@ -223,7 +254,14 @@ void read_file_header(int *text,
         {
             memset(word, 0, 20);
             fscanf(fptr, "%s", word);
-            define_symbol(word, text, table, symbol_table, definition_table, mem_pos, current_line);
+            define_symbol(word,
+                          text,
+                          table,
+                          symbol_table,
+                          definition_table,
+                          mem_pos,
+                          *current_line,
+                          offset_list);
             symbol_table_get(symbol_table, word)->is_extern = 1;
             use_table_put(use_table, word, -1);
             memset(word, 0, 20);
@@ -239,6 +277,7 @@ void read_file_header(int *text,
             fscanf(fptr, "%s", word);
             definition_table_put(definition_table, word, 0);
         }
+        (*current_line)++;
     }
 }
 
@@ -249,45 +288,77 @@ void section_data(int *text,
                   definition_table *definition_table,
                   use_table *use_table,
                   int *mem_pos,
-                  int current_line,
-                  char *word)
+                  int *current_line,
+                  int *offset_list)
 {
-    if (check_label(word) == 1)
+    char word[20];
+    fscanf(fptr, "%s", word);
+    if (strcmp(word, "DATA") != 0)
     {
-        define_symbol(word, text, table, symbol_table, definition_table, *mem_pos, current_line);
-        memset(word, 0, 20);
-        return;
+        printf("%s\n", "DATA section not defined");
     }
-    else if (!strcmp(word, "CONST"))
+    memset(word, 0, 20);
+
+    while (fscanf(fptr, "%s", word) != EOF)
     {
-        memset(word, 0, 20);
-        fscanf(fptr, "%s", word);
-        text[*mem_pos] = convert_string_to_int(word, current_line);
-        (*mem_pos)++;
-    }
-    else if (!strcmp(word, "SPACE"))
-    {
-        text[*mem_pos] = 0;
-        (*mem_pos)++;
-        if (fscanf(fptr, "%s", word) != EOF)
+
+        if (check_label(word) == 1)
         {
-            if (check_string_is_number(word))
+            define_symbol(word,
+                          text,
+                          table,
+                          symbol_table,
+                          definition_table,
+                          *mem_pos,
+                          *current_line,
+                          offset_list);
+            memset(word, 0, 20);
+        }
+        else
+        {
+            printf("%s %d\n", "Syntatic error: Label missing in SECTION DATA line", *current_line);
+        }
+
+        fscanf(fptr, "%s", word);
+        if (!strcmp(word, "CONST"))
+        {
+            memset(word, 0, 20);
+            fscanf(fptr, "%s", word);
+            text[*mem_pos] = convert_string_to_int(word, *current_line);
+            (*mem_pos)++;
+        }
+        else if (!strcmp(word, "SPACE"))
+        {
+            text[*mem_pos] = 0;
+            (*mem_pos)++;
+            if (fgetc(fptr) != '\n')
             {
-                for (int i = 0; i < convert_string_to_int(word, current_line) - 1; i++)
+                fscanf(fptr, "%s", word);
+                if (!check_string_is_number(word))
+                {
+                    printf("%s %d\n", "Syntatic error: parameter is not a number in SPACE Directive", *current_line);
+                }
+                for (int i = 0; i < convert_string_to_int(word, *current_line) - 1; i++)
                 {
                     text[*mem_pos] = 0;
                     (*mem_pos)++;
                 }
-                return;
             }
-            section_data(text, fptr, table, symbol_table, definition_table, use_table, mem_pos, current_line, word);
+            continue;
         }
+        else
+        {
+            printf("%s %d\n", "Diretiva diferente de CONST e SPACE na seção DATA na linha ", *current_line);
+        }
+        memset(word, 0, 20);
+        if (fgetc(fptr) != '\n')
+        {
+            printf("%s %d\n",
+                   "Syntactic error: Directive get more parameters than it needs, in line",
+                   *current_line);
+        }
+        (*current_line)++;
     }
-    else
-    {
-        printf("%s %d\n", "Diretiva diferente de CONST e SPACE na seção DATA na linha ", current_line);
-    }
-    memset(word, 0, 20);
 }
 
 void write_output_file(int *text,
